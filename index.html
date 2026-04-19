@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocCertifier — Blockchain Document Certification</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <div class="logo">
+    <span class="logo-mark">Doc<span>Certifier</span></span>
+    <span class="logo-badge">SEPOLIA</span>
+  </div>
+  <div class="header-network">
+    <div class="network-dot" id="networkDot"></div>
+    <span id="networkLabel">Non connecté</span>
+    <button class="wallet-btn" id="walletBtn" onclick="connectWallet()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="2" y="6" width="20" height="14" rx="2"/>
+        <path d="M16 14h2"/>
+        <path d="M6 2h12l2 4H4L6 2z"/>
+      </svg>
+      <span id="walletLabel">Connecter MetaMask</span>
+    </button>
+  </div>
+</header>
+
+<!-- ── Main ── -->
+<main>
+
+  <!-- Hero -->
+  <div class="hero">
+    <p class="hero-eyebrow">Blockchain · Ethereum · Solidity</p>
+    <h1>Certification de documents<br><em>immuable &amp; décentralisée</em></h1>
+    <p class="hero-sub">
+      Enregistrez l'empreinte cryptographique de vos documents sur la blockchain Ethereum.
+      Vérifiable par n'importe qui, pour toujours, sans intermédiaire.
+    </p>
+  </div>
+
+  <!-- Blockchain principles -->
+  <div class="principles">
+    <div class="principle">
+      <div class="principle-icon">⬡</div>
+      <div class="principle-label">Décentralisation</div>
+    </div>
+    <div class="principle">
+      <div class="principle-icon">◈</div>
+      <div class="principle-label">Immutabilité</div>
+    </div>
+    <div class="principle">
+      <div class="principle-icon">◎</div>
+      <div class="principle-label">Transparence</div>
+    </div>
+    <div class="principle">
+      <div class="principle-icon">◇</div>
+      <div class="principle-label">Sans intermédiaire</div>
+    </div>
+  </div>
+
+  <!-- Contract info bar -->
+  <div class="contract-card">
+    <div class="contract-card-header">
+      <span class="contract-card-title">DocCertifier.sol — déployé</span>
+      <span class="contract-card-addr" id="contractAddrShort">0xYour...Address</span>
+    </div>
+    <div class="contract-card-body">
+      <div class="contract-stat">
+        <span class="contract-stat-val" id="statCertified">—</span>
+        <div class="contract-stat-label">Certifications</div>
+      </div>
+      <div class="contract-stat">
+        <span class="contract-stat-val" id="statNetwork">Sepolia</span>
+        <div class="contract-stat-label">Réseau</div>
+      </div>
+      <div class="contract-stat">
+        <span class="contract-stat-val" id="statBlock">—</span>
+        <div class="contract-stat-label">Bloc actuel</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab navigation -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('certify', this)">Certifier</button>
+    <button class="tab-btn" onclick="switchTab('verify', this)">Vérifier</button>
+    <button class="tab-btn" onclick="switchTab('about', this)">Comment ça marche</button>
+  </div>
+
+  <!-- ── Tab: Certifier ── -->
+  <div class="tab-panel active" id="tab-certify">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Certifier un document</div>
+          <div class="card-desc">Enregistre le hash keccak256 du fichier sur la blockchain</div>
+        </div>
+        <div class="step-badge">écriture · gas requis</div>
+      </div>
+
+      <!-- File drop zone -->
+      <div class="dropzone" id="certDropzone">
+        <input type="file" id="certFile" onchange="onCertFileSelected(this)">
+        <div class="drop-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="drop-label"><strong>Choisir un fichier</strong> ou déposer ici</div>
+        <div class="drop-sub">PDF, DOCX, JPG, PNG — tout format accepté</div>
+      </div>
+
+      <!-- Selected file info -->
+      <div class="file-selected" id="certFileInfo">
+        <div class="file-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <span class="file-name" id="certFileName">—</span>
+        <span class="file-size" id="certFileSize">—</span>
+      </div>
+
+      <!-- Hash preview -->
+      <div class="hash-preview" id="certHashPreview">
+        <div class="hash-label">keccak256 hash (calculé localement)</div>
+        <div class="hash-value" id="certHashValue">—</div>
+      </div>
+
+      <hr class="separator">
+
+      <!-- Metadata field -->
+      <div class="field">
+        <div class="field-label">
+          Description du document
+          <span class="field-hint">obligatoire</span>
+        </div>
+        <input type="text" id="certMeta">
+      </div>
+
+      <!-- Actions -->
+      <div class="btn-row">
+        <button class="btn btn-primary" id="certBtn" onclick="certify()" disabled>
+          <svg viewBox="0 0 24 24">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          Certifier sur la blockchain
+        </button>
+        <button class="btn btn-secondary" onclick="resetCertify()">Réinitialiser</button>
+      </div>
+
+      <!-- Result -->
+      <div class="result-panel" id="certResult"></div>
+    </div>
+  </div>
+
+  <!-- ── Tab: Vérifier ── -->
+  <div class="tab-panel" id="tab-verify">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Vérifier un document</div>
+          <div class="card-desc">Contrôle l'authenticité sans wallet ni gas</div>
+        </div>
+        <div class="step-badge">lecture · gratuit</div>
+      </div>
+
+      <!-- File drop zone -->
+      <div class="dropzone" id="verDropzone">
+        <input type="file" id="verFile" onchange="onVerFileSelected(this)">
+        <div class="drop-icon">
+          <svg viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </div>
+        <div class="drop-label"><strong>Choisir le fichier</strong> à vérifier</div>
+        <div class="drop-sub">Le fichier n'est jamais envoyé vers un serveur</div>
+      </div>
+
+      <!-- Selected file info -->
+      <div class="file-selected" id="verFileInfo">
+        <div class="file-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <span class="file-name" id="verFileName">—</span>
+        <span class="file-size" id="verFileSize">—</span>
+      </div>
+
+      <!-- Hash preview -->
+      <div class="hash-preview" id="verHashPreview">
+        <div class="hash-label">keccak256 hash (calculé localement)</div>
+        <div class="hash-value" id="verHashValue">—</div>
+      </div>
+
+      <!-- Actions -->
+      <div class="btn-row" style="margin-top: 1.2rem;">
+        <button class="btn btn-primary" id="verBtn" onclick="verifyDoc()" disabled>
+          <svg viewBox="0 0 24 24">
+            <polyline points="9 11 12 14 22 4"/>
+            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+          </svg>
+          Vérifier l'authenticité
+        </button>
+        <button class="btn btn-secondary" onclick="resetVerify()">Réinitialiser</button>
+      </div>
+
+      <!-- Result -->
+      <div class="result-panel" id="verResult"></div>
+    </div>
+  </div>
+
+  <!-- ── Tab: Comment ça marche ── -->
+  <div class="tab-panel" id="tab-about">
+
+    <div class="how-it-works">
+      <div class="how-header">Processus de certification</div>
+      <div class="how-steps">
+        <div class="how-step">
+          <div class="how-step-num">01</div>
+          <div class="how-step-title">Hash local</div>
+          <div class="how-step-desc">
+            Le fichier est haché avec keccak256 dans le navigateur.
+            Aucune donnée ne quitte votre machine.
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">02</div>
+          <div class="how-step-title">Signature MetaMask</div>
+          <div class="how-step-desc">
+            MetaMask signe la transaction avec votre clé privée
+            et vous demande confirmation.
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">03</div>
+          <div class="how-step-title">Enregistrement</div>
+          <div class="how-step-desc">
+            Le hash, l'adresse émettrice et l'horodatage sont inscrits
+            de façon permanente sur la blockchain.
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">04</div>
+          <div class="how-step-title">Vérification libre</div>
+          <div class="how-step-desc">
+            N'importe qui peut vérifier n'importe quel document
+            sans wallet. Lecture gratuite.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 1.5rem;">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Contrat DocCertifier.sol</div>
+          <div class="card-desc">Fonctions principales exposées par le smart contract</div>
+        </div>
+      </div>
+      <div class="code-block">
+        <div><span class="code-comment">// Certification — modifie l'état, coûte du gas</span></div>
+        <div>
+          <span class="code-keyword">function</span>
+          <span class="code-text"> certify</span>
+          <span class="code-muted">(bytes32 docHash, string metadata)</span>
+          <span class="code-keyword"> external</span>
+        </div>
+        <br>
+        <div><span class="code-comment">// Vérification — lecture seule, gratuite</span></div>
+        <div>
+          <span class="code-keyword">function</span>
+          <span class="code-text"> verify</span>
+          <span class="code-muted">(bytes32 docHash)</span>
+          <span class="code-keyword"> external view</span>
+        </div>
+        <div class="code-indent">
+          → <span class="code-text">issuer, timestamp, metadata, revoked</span>
+        </div>
+        <br>
+        <div><span class="code-comment">// Révocation — réservée à l'émetteur original</span></div>
+        <div>
+          <span class="code-keyword">function</span>
+          <span class="code-text"> revoke</span>
+          <span class="code-muted">(bytes32 docHash)</span>
+          <span class="code-keyword"> external</span>
+        </div>
+        <br>
+        <div><span class="code-comment">// Événements émis</span></div>
+        <div>
+          <span class="code-keyword">event</span>
+          <span class="code-text"> DocumentCertified</span>
+          <span class="code-muted">(bytes32 indexed, address indexed, uint256, string)</span>
+        </div>
+        <div>
+          <span class="code-keyword">event</span>
+          <span class="code-text"> DocumentRevoked</span>
+          <span class="code-muted">(bytes32 indexed, address indexed)</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+
+<script src="app.js"></script>
+</body>
+</html>
